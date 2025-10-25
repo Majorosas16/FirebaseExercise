@@ -16,7 +16,9 @@ import { setDoc, doc } from "firebase/firestore";
 function App() {
   const dispatch = useDispatch();
 
+  // Hace el dispatch de la acción setUser cuando el usuario inicia sesión
   useEffect(() => {
+    // Validar si hay un usuario conectado o no
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         dispatch(setUser(user.uid));

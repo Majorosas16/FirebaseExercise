@@ -31,6 +31,7 @@ export const Home = () => {
       });
   };
 
+  //Traer los productos de la base de datos al cargar el componente
   useEffect(() => {
     const getProducts = async () => {
       //Obtener de la base de datos los productos
@@ -52,6 +53,7 @@ export const Home = () => {
     };
 
     getProducts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAddProduct = async (product: Product) => {

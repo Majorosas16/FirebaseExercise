@@ -14,6 +14,7 @@ export const FormRegister = () => {
   >(false);
   const navigate = useNavigate();
 
+  // useEffect para validar la contraseña al cambiar el password
   useEffect(() => {
     const checkPassword = async () => {
       const status = await validatePassword(auth, password);
