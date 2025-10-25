@@ -8,3 +8,7 @@ export interface InitialState {
   products: Product[];
   cart: Product[];
 }
+
+export interface ProductWithDocId extends Product {
+  docId: string;
+}

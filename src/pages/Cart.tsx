@@ -3,11 +3,15 @@ import type { RootState } from "../redux/store";
 import { useEffect } from "react";
 import { doc, deleteDoc, getDocs, collection } from "firebase/firestore";
 import { db } from "../services/firebaseConfig";
-import type { Product } from "../types/productsType";
+import type { Product, ProductWithDocId } from "../types/productsType";
 import { clearCart, setCart, deleteCart } from "../redux/slices/productsSlice";
 
 export const Cart = () => {
-  const cartSlice = useSelector((state: RootState) => state.productsSlice.cart);
+  const cartSlice = useSelector(
+    (state: RootState) => state.productsSlice.cart as ProductWithDocId[]
+  ); // asegurarse que el slice guardas ProductWithDocId
+  console.log(cartSlice);
+
   const userID = useSelector((state: RootState) => state.auth.userID);
   const dispatch = useDispatch();
 
@@ -18,12 +22,16 @@ export const Cart = () => {
       const querySnapshot = await getDocs(
         collection(db, "users", userID, "cart")
       );
-      // querySnapshot.forEach((doc) => {
-      //   dispatch(setCart(doc.data() as Product));
-      // });
+
       querySnapshot.forEach((docSnap) => {
-        // Aquí el id es el del documento de firestore
-        dispatch(setCart({ ...docSnap.data(), id: docSnap.id } as Product));
+        const productData = docSnap.data() as Product;
+        // Inserta producto con docId para identificar documento Firestore (id cart y id producto son diferentes)
+        dispatch(
+          setCart({
+            ...productData,
+            docId: docSnap.id,
+          } as ProductWithDocId)
+        );
       });
     };
 
@@ -31,24 +39,35 @@ export const Cart = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleDeleteProduct = async (product: Product) => {
-    console.log(product.id); 
+  const handleDeleteProduct = async (product: ProductWithDocId) => {
     try {
-      const productRef = doc(db, "users", userID, "cart", product.id);
+      const productRef = doc(db, "users", userID, "cart", product.docId);
       await deleteDoc(productRef);
-      dispatch(deleteCart(product.id));
+      dispatch(deleteCart(product.docId));
       console.log("Producto eliminado de Firestore");
     } catch (error) {
       console.error("Error eliminando el producto de Firestore:", error);
     }
   };
 
+  const groupedProducts = cartSlice.reduce((acc, product) => {
+    const existing = acc.find((p) => p.id === product.id);
+    if (existing) {
+      existing.quantity += 1;
+    } else {
+      acc.push({ ...product, quantity: 1 });
+    }
+    return acc;
+  }, [] as (ProductWithDocId & { quantity: number })[]);
+
   return (
     <>
       <h1>Tu carrito de compras</h1>
-      {cartSlice.map((product, index) => (
-        <div key={product.id + index}>
-          <h3>{product.name}</h3>
+      {groupedProducts.map((product) => (
+        <div key={product.docId + product.id}>
+          <h3>
+            {product.name} {product.quantity > 1 && `x${product.quantity}`}
+          </h3>
           <h3>{product.price}</h3>
           <button onClick={() => handleDeleteProduct(product)}>
             Eliminar del carrito
