@@ -1,1 +1,2 @@
-# Web20252
+# Firebase exercise
+## Delete and render UI
